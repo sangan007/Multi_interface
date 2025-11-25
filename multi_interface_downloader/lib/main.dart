@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'ui/splash_screen.dart';
 
 void main() {
-  // Ensure transparent status bar for edge-to-edge look
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,

@@ -55,27 +55,23 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // --- Header ---
             _buildHeader(),
 
-            // --- Main Content ---
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
-                  // Configuration Card
                   _buildConfigCard(isBusy),
 
                   const SizedBox(height: 24),
 
-                  // Actions
                   Row(
                     children: [
                       Expanded(
                         child: _buildActionButton(
                           label: "Initialize Stream",
                           icon: Icons.bolt,
-                          color: const Color(0xFF10B981), // Emerald
+                          color: const Color(0xFF10B981),
                           onPressed: isBusy
                               ? null
                               : () {
@@ -94,7 +90,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
                         child: _buildActionButton(
                           label: "Abort",
                           icon: Icons.stop_circle_outlined,
-                          color: const Color(0xFFEF4444), // Red
+                          color: const Color(0xFFEF4444),
                           onPressed: isBusy ? controller.stopDownload : null,
                           isOutlined: true,
                         ),
@@ -104,13 +100,11 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
 
                   const SizedBox(height: 24),
 
-                  // Terminal Window
                   _buildTerminalWindow(state.logs),
                 ],
               ),
             ),
 
-            // --- Status Footer ---
             _buildStatusBar(state.status),
           ],
         ),
@@ -296,7 +290,6 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
       ),
       child: Column(
         children: [
-          // Terminal Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
@@ -329,7 +322,6 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
               ],
             ),
           ),
-          // Log List
           Expanded(
             child: ListView.builder(
               controller: _logScrollCtrl,
@@ -337,7 +329,6 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
               itemCount: logs.length,
               itemBuilder: (context, index) {
                 final log = logs[index];
-                // Simple color coding based on keywords
                 Color logColor = const Color(0xFF94A3B8);
                 if (log.contains("SUCCESS") || log.contains("Complete")) {
                   logColor = const Color(0xFF34D399);

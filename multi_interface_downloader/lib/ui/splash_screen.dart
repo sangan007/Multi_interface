@@ -33,7 +33,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
 
-    // Navigate after animation + artificial delay for "loading" feel
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
@@ -61,7 +60,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Animated Logo Container
             SlideTransition(
               position: _slideAnimation,
               child: FadeTransition(
@@ -119,7 +117,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             
             const SizedBox(height: 64),
             
-            // Loading Indicator
             FadeTransition(
               opacity: _fadeAnimation,
               child: const SizedBox(

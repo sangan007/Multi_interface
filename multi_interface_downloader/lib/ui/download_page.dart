@@ -14,20 +14,10 @@ class DownloadPage extends ConsumerStatefulWidget {
 
 class _DownloadPageState extends ConsumerState<DownloadPage> {
   final TextEditingController _urlCtrl = TextEditingController();
-  final TextEditingController _if1Ctrl = TextEditingController();
-  final TextEditingController _if2Ctrl = TextEditingController();
-  final TextEditingController _fileCtrl = TextEditingController();
- 
+  final TextEditingController _if1Ctrl = TextEditingController(text: "Wi-Fi");
+  final TextEditingController _if2Ctrl = TextEditingController(text: "Cellular");
+  final TextEditingController _fileCtrl = TextEditingController(text: "large_file.zip");
   final ScrollController _logScrollCtrl = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-    // Defaults for testing convenience
-    _if1Ctrl.text = "wlan0";
-    _if2Ctrl.text = "eth0";
-    _fileCtrl.text = "output.bin";
-  }
 
   @override
   void dispose() {
@@ -38,7 +28,6 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
     _logScrollCtrl.dispose();
     super.dispose();
   }
-
 
   void _scrollToBottom() {
     if (_logScrollCtrl.hasClients) {
@@ -56,122 +45,319 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(downloadControllerProvider);
     final controller = ref.read(downloadControllerProvider.notifier);
+    final isBusy = state.isDownloading;
 
-    ref.listen(downloadControllerProvider, (previous, next) {
-      if (previous?.logs.length != next.logs.length) {
-        _scrollToBottom();
-      }
-      
-      if (previous?.isDownloading == true && next.isDownloading == false) {
-        if (next.status == AppConstants.statusComplete) {
-           _showDialog("Success", "Download completed and verified successfully.");
-        } else if (next.status == AppConstants.statusFailed) {
-           _showDialog("Error", "Download failed. Check logs for details.");
-        }
-      }
+    ref.listen(downloadControllerProvider, (prev, next) {
+      if (prev?.logs.length != next.logs.length) _scrollToBottom();
     });
 
-    final bool isBusy = state.isDownloading;
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppConstants.appTitle),
-        elevation: 2,
-      ),
-      body: Column(
-        children: [
-          // --- Configuration Panel ---
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                _buildTextField("Download URL:", _urlCtrl, isBusy, hint: "https://..."),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(child: _buildTextField("Interface 1:", _if1Ctrl, isBusy)),
-                    const SizedBox(width: 10),
-                    Expanded(child: _buildTextField("Interface 2:", _if2Ctrl, isBusy)),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                _buildTextField("Output File:", _fileCtrl, isBusy),
-              ],
-            ),
-          ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // --- Header ---
+            _buildHeader(),
 
-          // --- Controls ---
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: isBusy
-                      ? null
-                      : () {
-                          if (_validateInputs()) {
-                            controller.startDownload(
-                              url: _urlCtrl.text.trim(),
-                              iface1: _if1Ctrl.text.trim(),
-                              iface2: _if2Ctrl.text.trim(),
-                              fileName: _fileCtrl.text.trim(),
-                            );
-                          }
-                        },
-                  icon: const Icon(Icons.play_arrow),
-                  label: const Text("Start Download"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green.shade700,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(140, 48),
-                  ),
-                ),
-                ElevatedButton.icon(
-                  onPressed: isBusy ? controller.stopDownload : null,
-                  icon: const Icon(Icons.stop),
-                  label: const Text("Stop"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade700,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(140, 48),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
+            // --- Main Content ---
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(20),
+                children: [
+                  // Configuration Card
+                  _buildConfigCard(isBusy),
 
-          // --- Terminal Log ---
-          Expanded(
-            child: Container(
-              color: const Color(0xFF101010), // Very dark grey/black
-              width: double.infinity,
-              padding: const EdgeInsets.all(8.0),
-              child: ListView.builder(
-                controller: _logScrollCtrl,
-                itemCount: state.logs.length,
-                itemBuilder: (context, index) {
-                  return Text(
-                    state.logs[index],
-                    style: GoogleFonts.robotoMono(
-                      color: Colors.greenAccent,
-                      fontSize: 14,
-                    ),
-                  );
-                },
+                  const SizedBox(height: 24),
+
+                  // Actions
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildActionButton(
+                          label: "Initialize Stream",
+                          icon: Icons.bolt,
+                          color: const Color(0xFF10B981), // Emerald
+                          onPressed: isBusy
+                              ? null
+                              : () {
+                                  if (_urlCtrl.text.isEmpty) return;
+                                  controller.startDownload(
+                                    url: _urlCtrl.text.trim(),
+                                    iface1: _if1Ctrl.text,
+                                    iface2: _if2Ctrl.text,
+                                    fileName: _fileCtrl.text,
+                                  );
+                                },
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildActionButton(
+                          label: "Abort",
+                          icon: Icons.stop_circle_outlined,
+                          color: const Color(0xFFEF4444), // Red
+                          onPressed: isBusy ? controller.stopDownload : null,
+                          isOutlined: true,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Terminal Window
+                  _buildTerminalWindow(state.logs),
+                ],
               ),
             ),
-          ),
 
-          // --- Status Bar ---
+            // --- Status Footer ---
+            _buildStatusBar(state.status),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
+      ),
+      child: Row(
+        children: [
           Container(
-            color: Colors.grey.shade200,
-            width: double.infinity,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF38BDF8).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.hub, color: Color(0xFF38BDF8)),
+          ),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "MultiNet Monitor",
+                style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+              Text(
+                "Active Multipath Engine",
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: Colors.white.withOpacity(0.5),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConfigCard(bool isBusy) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B), // Slate 800
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "CONFIGURATION",
+            style: GoogleFonts.jetBrainsMono(
+              color: Colors.white.withOpacity(0.4),
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildInput(_urlCtrl, "Target URL", Icons.link, isBusy),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(child: _buildInput(_if1Ctrl, "Interface A", Icons.wifi, isBusy)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildInput(_if2Ctrl, "Interface B", Icons.cell_tower, isBusy)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildInput(_fileCtrl, "Output Filename", Icons.save_alt, isBusy),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInput(
+    TextEditingController controller,
+    String label,
+    IconData icon,
+    bool disabled,
+  ) {
+    return TextField(
+      controller: controller,
+      enabled: !disabled,
+      style: GoogleFonts.jetBrainsMono(fontSize: 13),
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, size: 18, color: const Color(0xFF94A3B8)),
+        floatingLabelBehavior: FloatingLabelBehavior.auto,
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback? onPressed,
+    bool isOutlined = false,
+  }) {
+    final isDisabled = onPressed == null;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: isDisabled
+                ? const Color(0xFF334155).withOpacity(0.5)
+                : isOutlined
+                    ? Colors.transparent
+                    : color,
+            borderRadius: BorderRadius.circular(12),
+            border: isOutlined && !isDisabled
+                ? Border.all(color: color.withOpacity(0.5), width: 1.5)
+                : null,
+            boxShadow: !isDisabled && !isOutlined
+                ? [
+                    BoxShadow(
+                      color: color.withOpacity(0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    )
+                  ]
+                : [],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: isDisabled
+                    ? Colors.white.withOpacity(0.2)
+                    : isOutlined
+                        ? color
+                        : Colors.white,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: isDisabled
+                      ? Colors.white.withOpacity(0.2)
+                      : isOutlined
+                          ? color
+                          : Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTerminalWindow(List<String> logs) {
+    return Container(
+      height: 250,
+      decoration: BoxDecoration(
+        color: const Color(0xFF0D1117), // Deep black/blue
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Column(
+        children: [
+          // Terminal Header
+          Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              "Status: ${state.status}",
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.03),
+              border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.terminal, size: 14, color: Color(0xFF94A3B8)),
+                const SizedBox(width: 8),
+                Text(
+                  "LIVE LOG STREAM",
+                  style: GoogleFonts.jetBrainsMono(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF94A3B8),
+                  ),
+                ),
+                const Spacer(),
+                Row(
+                  children: [
+                    _buildDot(const Color(0xFFEF4444)),
+                    const SizedBox(width: 6),
+                    _buildDot(const Color(0xFFF59E0B)),
+                    const SizedBox(width: 6),
+                    _buildDot(const Color(0xFF10B981)),
+                  ],
+                )
+              ],
+            ),
+          ),
+          // Log List
+          Expanded(
+            child: ListView.builder(
+              controller: _logScrollCtrl,
+              padding: const EdgeInsets.all(12),
+              itemCount: logs.length,
+              itemBuilder: (context, index) {
+                final log = logs[index];
+                // Simple color coding based on keywords
+                Color logColor = const Color(0xFF94A3B8);
+                if (log.contains("SUCCESS") || log.contains("Complete")) {
+                  logColor = const Color(0xFF34D399);
+                } else if (log.contains("Error") || log.contains("Failed")) {
+                  logColor = const Color(0xFFF87171);
+                } else if (log.contains("WARNING")) {
+                  logColor = const Color(0xFFFBBF24);
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 4.0),
+                  child: Text(
+                    log,
+                    style: GoogleFonts.jetBrainsMono(
+                      color: logColor,
+                      fontSize: 11,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -179,44 +365,64 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController ctrl, bool disabled, {String? hint}) {
-    return TextFormField(
-      controller: ctrl,
-      enabled: !disabled,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        border: const OutlineInputBorder(),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        isDense: true,
+  Widget _buildDot(Color color) {
+    return Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
       ),
     );
   }
 
-  bool _validateInputs() {
-    if (_urlCtrl.text.isEmpty || !_urlCtrl.text.startsWith('http')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid HTTP(S) URL')),
-      );
-      return false;
-    }
-    if (_fileCtrl.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter an output filename')),
-      );
-      return false;
-    }
-    return true;
-  }
+  Widget _buildStatusBar(String status) {
+    Color statusColor = const Color(0xFF94A3B8);
+    // ignore: unused_local_variable
+    IconData statusIcon = Icons.circle_outlined;
 
-  void _showDialog(String title, String body) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: Text(body),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("OK"))
+    if (status == AppConstants.statusDownloading) {
+      statusColor = const Color(0xFF38BDF8);
+      statusIcon = Icons.sync;
+    } else if (status == AppConstants.statusComplete) {
+      statusColor = const Color(0xFF10B981);
+      statusIcon = Icons.check_circle;
+    } else if (status == AppConstants.statusFailed) {
+      statusColor = const Color(0xFFEF4444);
+      statusIcon = Icons.error_outline;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      color: const Color(0xFF0F172A),
+      child: Row(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: statusColor,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: statusColor.withOpacity(0.5),
+                  blurRadius: 6,
+                  spreadRadius: 1,
+                )
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            status.toUpperCase(),
+            style: GoogleFonts.jetBrainsMono(
+              color: statusColor,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
+            ),
+          ),
         ],
       ),
     );

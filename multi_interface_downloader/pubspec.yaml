@@ -1,0 +1,32 @@
+name: multi_interface_downloader
+description: A Flutter application reproducing a Multi-Interface Download Monitor.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # State Management
+  flutter_riverpod: ^2.5.1
+  # Networking
+  dio: ^5.4.3
+  # File System & Paths
+  path_provider: ^2.1.2
+  path: ^1.9.0
+  # Fonts for Terminal Look
+  google_fonts: ^6.2.1
+  # Formatting
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  # For Unit Testing Logic
+  test: ^1.24.0
+
+flutter:
+  uses-material-design: true

@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'download_service.dart';
 import '../utils/formatters.dart';
 
-// -- State Definition --
 class DownloadState {
   final String status;
   final bool isDownloading;
@@ -110,8 +109,7 @@ class DownloadController extends StateNotifier<DownloadState> {
       // 4. Prepare Files
       _part1File = await _service.getTempFile("part1.tmp");
       _part2File = await _service.getTempFile("part2.tmp");
-      
-      // Clean previous temp files
+    
       if (_part1File!.existsSync()) _part1File!.deleteSync();
       if (_part2File!.existsSync()) _part2File!.deleteSync();
 
@@ -142,7 +140,7 @@ class DownloadController extends StateNotifier<DownloadState> {
       ]);
 
       // 7. Completion & Merging
-      _stopProgressTimer(); // Final poll happens inside merge or just before
+      _stopProgressTimer(); 
       _setStatus("Merging...");
       addLog("Streams complete. Merging parts...");
 

@@ -13,13 +13,11 @@ class DownloadPage extends ConsumerStatefulWidget {
 }
 
 class _DownloadPageState extends ConsumerState<DownloadPage> {
-  // Input Controllers
   final TextEditingController _urlCtrl = TextEditingController();
   final TextEditingController _if1Ctrl = TextEditingController();
   final TextEditingController _if2Ctrl = TextEditingController();
   final TextEditingController _fileCtrl = TextEditingController();
-  
-  // Log Scrolling
+ 
   final ScrollController _logScrollCtrl = ScrollController();
 
   @override
@@ -41,7 +39,7 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
     super.dispose();
   }
 
-  // Auto-scroll logs to bottom
+
   void _scrollToBottom() {
     if (_logScrollCtrl.hasClients) {
       SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -59,13 +57,11 @@ class _DownloadPageState extends ConsumerState<DownloadPage> {
     final state = ref.watch(downloadControllerProvider);
     final controller = ref.read(downloadControllerProvider.notifier);
 
-    // Trigger scroll on log update
     ref.listen(downloadControllerProvider, (previous, next) {
       if (previous?.logs.length != next.logs.length) {
         _scrollToBottom();
       }
       
-      // Handle Success/Fail Dialogs based on status transitions
       if (previous?.isDownloading == true && next.isDownloading == false) {
         if (next.status == AppConstants.statusComplete) {
            _showDialog("Success", "Download completed and verified successfully.");

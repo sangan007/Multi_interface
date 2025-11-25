@@ -21,7 +21,6 @@ class DownloadMonitorApp extends StatelessWidget {
           seedColor: Colors.blueGrey,
           brightness: Brightness.light,
         ),
-        // Ensure default font is readable
         textTheme: GoogleFonts.robotoTextTheme(),
       ),
       darkTheme: ThemeData(

@@ -1,6 +1,5 @@
 import 'package:intl/intl.dart';
 
-/// App-wide constants for easy localization/changes
 class AppConstants {
   static const String appTitle = 'Multi-Interface Download Monitor';
   static const String statusReady = 'Ready';
@@ -15,23 +14,19 @@ class AppConstants {
   static const String msgMismatch = '✗ Warning: File size mismatch!';
 }
 
-/// Formats bytes into human readable string (KB, MB, GB)
 String formatBytes(int bytes, [int decimals = 2]) {
   if (bytes <= 0) return "0 B";
   const suffixes = ["B", "KB", "MB", "GB", "TB"];
-  var i = (bytes.toString().length - 1) ~/ 3; // rough estimate log10
-  // Handle edge cases for small numbers or very large
+  var i = (bytes.toString().length - 1) ~/ 3; 
   if (i >= suffixes.length) i = suffixes.length - 1;
   
-  double value = bytes / (1 << (10 * i)); // binary division (1024)
-  
-  // Custom logic to match standard tools behavior
+  double value = bytes / (1 << (10 * i)); 
+
   if (i == 0) return "$bytes B";
   
   return "${value.toStringAsFixed(decimals)} ${suffixes[i]}";
 }
 
-/// Formats current timestamp for logs
 String getCurrentTimestamp() {
   return DateFormat('HH:mm:ss').format(DateTime.now());
 }
